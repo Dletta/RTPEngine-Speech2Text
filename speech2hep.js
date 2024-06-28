@@ -1,6 +1,6 @@
 const chokidar = require('chokidar');
 const fs = require('fs');
-const whisper = require('nodejs-whisper').whisper;
+const whisper = require('nodejs-whisper').nodewhisper;
 const options = {
 	modelName: "base.en",       // default
 	// modelPath: "/custom/path/to/model.bin", // use model in a custom directory (cannot use along with 'modelName')
