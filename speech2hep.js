@@ -2,17 +2,22 @@ const chokidar = require('chokidar');
 const fs = require('fs');
 const whisper = require('nodejs-whisper').nodewhisper;
 const options = {
-	modelName: "base.en",       // default
-	// modelPath: "/custom/path/to/model.bin", // use model in a custom directory (cannot use along with 'modelName')
+	modelName: 'base.en', //Downloaded models name
+	autoDownloadModelName: 'base.en', // (optional) autodownload a model if model is not present
+    verbose: true,
+	removeWavFileAfterTranscription: false,
+	withCuda: false, // (optional) use cuda for faster processing
 	whisperOptions: {
-	  language: 'auto',          // default (use 'auto' for auto detect)
-	  gen_file_txt: false,      // outputs .txt file
-	  gen_file_subtitle: false, // outputs .srt file
-	  gen_file_vtt: false,      // outputs .vtt file
-	  word_timestamps: false,     // timestamp for every word
-	  timestamp_size: 0      // cannot use along with word_timestamps:true
-	}
-  }
+		outputInText: false, // get output result in txt file
+		outputInVtt: false, // get output result in vtt file
+		outputInSrt: true, // get output result in srt file
+		outputInCsv: false, // get output result in csv file
+		translateToEnglish: false, //translate from source language to english
+		wordTimestamps: false, // Word-level timestamps
+		timestamps_length: 20, // amount of dialogue per timestamp pair
+		splitOnWord: true, //split on word rather than on token
+	},
+}
 
 var config = require('./config.js');
 
