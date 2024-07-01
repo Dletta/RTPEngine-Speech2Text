@@ -1,37 +1,18 @@
-const chokidar = require('chokidar');
-const fs = require('fs');
-const whisper = require('nodejs-whisper').nodewhisper;
-const options = {
-        modelName: 'base.en', //Downloaded models name
-        autoDownloadModelName: 'base.en', // (optional) autodownload a model if model is not present
-    verbose: true,
-        removeWavFileAfterTranscription: false,
-        withCuda: false, // (optional) use cuda for faster processing
-        whisperOptions: {
-                outputInText: false, // get output result in txt file
-                outputInVtt: false, // get output result in vtt file
-                outputInSrt: false, // get output result in srt file
-                outputInCsv: false, // get output result in csv file
-                translateToEnglish: false, //translate from source language to english
-                wordTimestamps: false, // Word-level timestamps
-                timestamps_length: 20, // amount of dialogue per timestamp pair
-                splitOnWord: true, //split on word rather than on token
-        },
-}
+import { Whisper } from "smart-whisper"
+import { decode } from "node-wav"
+import fs from "node:fs"
+import chokidar from 'chokidar'
+import * as hep_client from './hep.js'
+import * as config from './config.js'
 
-var config = require('./config.js');
-
-if (config.hep_config.debug) {
-        console.log(config)
-}
+console.log(config)
 
 if (config.hep_config) {
-  var hep_client = require('./hep.js');
-  hep_client.init(config.hep_config);
-  console.log('HEP Client ready!');
+hep_client.init(config.hep_config);
+console.log('HEP Client ready!');
 }
 
-const watcher = chokidar.watch(config.meta_path, {ignored: /^\./, persistent: true });
+const watcher = chokidar.watch(process.env.META_PATH, {ignored: /^\./, persistent: true });
 
 watcher
     .on('error', function(error) {
@@ -47,7 +28,8 @@ watcher
                         let pathArray = path.split('/')
                         let fileName = pathArray[pathArray.length - 1]
                         var newpath = fileName.replace(/\.meta/i, '-mix.wav');
-                        newpath = config.rec_path + '/' + newpath
+                        newpath = process.env.REC_PATH + '/' + newpath
+                        console.log(newpath)
                         try {
                                 var xcid = path.match(/\/([^\/]+)\/?\.meta$/)[1].split('-')[0];
                         } catch(e) {
@@ -60,7 +42,17 @@ watcher
                         var u_sec = ( datenow - (t_sec*1000))*1000;
                         console.log('Meta Hit! Seeking Audio at: ', newpath);
 
-                        const transcript = await whisper(newpath, options);
+                        const model = process.argv[2];
+                        const wav = process.argv[3];
+
+                        const whisper = new Whisper(model, { gpu: false });
+                        const pcm = read_wav(wav);
+
+                        const task = await whisper.transcribe(pcm, { language: "auto" });
+                        console.log(await task.result);
+
+                        const transcript = task.result
+
                         if (transcript) {
                                 for (let index = 0; index < transcript.length; index++) {
                                         const utterance = transcript[index];
@@ -98,6 +90,23 @@ watcher
                                         }
                                 }
                         }
+
+                        await whisper.free();
+                        console.log("Manually freed");
+
+                        function read_wav(file) {
+                            const { sampleRate, channelData } = decode(fs.readFileSync(file));
+
+                            if (sampleRate !== 16000) {
+                                throw new Error(`Invalid sample rate: ${sampleRate}`);
+                            }
+                            if (channelData.length !== 1) {
+                                throw new Error(`Invalid channel count: ${channelData.length}`);
+                            }
+
+                            return channelData[0];
+                        }
+                        
                 }
     });
 
@@ -115,3 +124,4 @@ process.on('SIGINT', function() {
     }, 2000);
   }
 });
+

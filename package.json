@@ -13,6 +13,8 @@
   "dependencies": {
     "chokidar": "*",
     "hep-js": "*",
-    "nodejs-whisper": "^0.1.18"
+    "node-wav": "^0.0.2",
+    "nodejs-whisper": "^0.1.18",
+    "smart-whisper": "^0.7.0"
   }
 }
