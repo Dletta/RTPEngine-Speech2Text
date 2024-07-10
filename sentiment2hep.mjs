@@ -56,9 +56,12 @@ async function handleEvent (err, ev) {
 
         if (eventItem.type == 'create') {
             if (eventItem.path.match(/.*\.meta/)) {
-                let callid = eventItem.path.match(/[0-9]+-[0-9A-Za-z%\.]*/)[0];
-                callid = callid.replace(/\%40/i, '@')
-                console.log(`Detected file for callid: ${callid}`)
+                try {
+                    let callid = eventItem.path.match(/.*\/(?<callid>.*)-/)[0];
+                    console.log(`Detected file for callid: ${callid}`)
+                } catch (err) {
+                    console.log('callid detection error:', err)   
+                }
             }
         }
 
@@ -69,7 +72,7 @@ async function handleEvent (err, ev) {
                 if (sdpCheck) {
                     /* processing file */
                     try {
-                        let callid = content.match(/(?<callid>[0-9\-]+@[0-9\.]+)/).groups.callid
+                        let callid = content.match(/CALL-ID\n[0-9]+:\n(?<callid>.+)\n/).groups.callid
                         let srcIP = content.match(/o=.*IP4 (?<srcIP>[0-9\.]+)/).groups.srcIP
                         let dstIP = content.match(/c=.*IP4 (?<dstIP>[0-9\.]+)/).groups.dstIP
                         console.log(`Detected callid: ${callid}, srcIP: ${srcIP}, dstIP: ${dstIP}, setting direction to 0`)
