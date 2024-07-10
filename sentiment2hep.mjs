@@ -57,7 +57,7 @@ async function handleEvent (err, ev) {
         if (eventItem.type == 'create') {
             if (eventItem.path.match(/.*\.meta/)) {
                 try {
-                    let callid = eventItem.path.match(/.*\/(?<callid>.*)-/)[0];
+                    let callid = eventItem.path.match(/.*\/(?<callid>.*)-/).groups.callid
                     console.log(`Detected file for callid: ${callid}`)
                 } catch (err) {
                     console.log('callid detection error:', err)   
@@ -103,8 +103,7 @@ async function callModel (path) {
         var newpath = fileName.replace(/\.meta/i, '-mix.wav');
         newpath = process.env.REC_PATH + '/' + newpath
         try { 
-            var callid = fileName.match(/[0-9]+-[0-9A-Za-z%\.]*/)[0]; 
-            callid = callid.replace(/\%40/i, '@')
+            var callid = fileName.match(/(?<callid>.*)-/).groups.callid; 
             if (debug) console.log(callid)
         } catch(err) { 
             console.log('Caught fileName error: ', err); 
